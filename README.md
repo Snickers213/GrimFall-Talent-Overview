@@ -1,4 +1,5 @@
 # GrimfallTalentOverview
+![GrimfallTalentOverview Preview](https://i.imgur.com/vl4h44n.png)
 
 A lightweight Grimfall-WoW addon that consolidates all your active talents into a single view.
 
