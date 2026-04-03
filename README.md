@@ -13,4 +13,4 @@ A lightweight Grimfall-WoW addon that consolidates all your active talent bonuse
 2. Place the `GrimfallTalentOverview` folder into your `\Grimfall\Games\Interface\AddOns` directory.
 
 
-## Made using Assisted AI Tools
+# Made using Assisted AI Tools
