@@ -1,0 +1,8 @@
+## Interface: 30300
+## Title: Grimfall Talent overview
+## Notes: Quickly see and view all your acquired talents
+## Author: Rob
+## SavedVariablesPerCharacter: MiniTalentCacheChar
+
+TalentData.lua
+Core.lua
