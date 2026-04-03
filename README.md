@@ -5,8 +5,7 @@ A lightweight Grimfall-WoW addon that consolidates all your active talent bonuse
 ## How to Use
 
 1. Open your Talents (default key: **N**).
-2. Click the **[Summary]** button at the bottom right of the frame.
-3. The overview will appear on the right side of the UI.
+2. The overview will appear on the right side of the UI.
 
 ## Installation
 
