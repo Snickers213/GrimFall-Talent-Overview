@@ -1,0 +1,8 @@
+## Interface: 30300
+## Title: MiniTalentList
+## Notes: TalentListMinimalist
+## Author: YourName
+## SavedVariablesPerCharacter: MiniTalentCacheChar
+
+TalentData.lua
+Core.lua
