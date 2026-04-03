@@ -11,7 +11,7 @@ A lightweight Grimfall-WoW addon that consolidates all your active talents into 
 ## Installation
 
 
-1. Download the Latest here [DOWNLOAD]https://github.com/Snickers213/GrimFall-Talentlist/releases/download/Release/GrimfallTalentOverview.7z
+1. Download the Latest here [DOWNLOAD](https://github.com/Snickers213/GrimFall-Talentlist/releases/download/Release/GrimfallTalentOverview.7z)
 2. Place the `GrimfallTalentOverview` folder into your `\Grimfall\Games\Interface\AddOns` directory.
 
 
