@@ -1,6 +1,6 @@
 # GrimfallTalentOverview
 
-A lightweight Grimfall-WoW addon that consolidates all your active talent bonuses into a single view.
+A lightweight Grimfall-WoW addon that consolidates all your active talents into a single view.
 
 ## How to Use
 
