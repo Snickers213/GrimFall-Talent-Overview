@@ -195,7 +195,7 @@ CL_FixedTalents = {
     [53648] = {{global_haste, 3, true}}, -- Sheath of Light (AP as SP)
 	
 -- PRIEST: DISCIPLINE
-    [52803] = {{Instant_heal, 5, true}, {Instant_damage, 5, true}}, -- Twin Disciplines
+    [52803] = {{instant_heal, 5, true}, {instant_damage, 5, true}}, -- Twin Disciplines
     [34910] = {{global_spirit, 6, true}, {spell_haste, 6, true}}, -- Englightenment
     [45244] = {{spell_crit, 3, true}}, -- Focused Will
 
