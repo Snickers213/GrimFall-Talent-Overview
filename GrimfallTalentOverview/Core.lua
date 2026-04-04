@@ -6,9 +6,10 @@ local ICON_SIZE = 21
 local ICON_GAPPING = 3
 local CELL_SIZE = ICON_SIZE + ICON_GAPPING
 local ICONS_PER_ROW = 4
+local currentViewSpec = nil
 local Title_Name = "Talent Overview"
 local F = CreateFrame("Frame", "CL_MiniTalentList", UIParent)
-F:SetWidth(360)
+F:SetWidth(370)
 F:SetBackdrop({
 	bgFile = "Interface\\TutorialFrame\\TutorialFrameBackground", 
 	edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", 
@@ -144,16 +145,45 @@ emptyText:SetPoint("CENTER", scroll, "CENTER", 0, 0)
 emptyText:SetText("Click 'Cache All' to\nview your talents.")
 local specFrames = {}
 local SPEC_MAP = {
-	["Arms"] = "WARRIOR", ["Fury"] = "WARRIOR", ["Protection"] = {"WARRIOR", "PALADIN"},
-	["Holy"] = {"PALADIN", "PRIEST"}, ["Retribution"] = "PALADIN",
-	["Beast Mastery"] = "HUNTER", ["Marksmanship"] = "HUNTER", ["Survival"] = "HUNTER",
-	["Discipline"] = "PRIEST", ["Shadow"] = "PRIEST",
-	["Assassination"] = "ROGUE", ["Combat"] = "ROGUE", ["Subtlety"] = "ROGUE",
-	["Elemental"] = "SHAMAN", ["Enhancement"] = "SHAMAN", ["Restoration"] = {"SHAMAN", "DRUID"},
-	["Arcane"] = "MAGE", ["Fire"] = "MAGE", ["Frost"] = "MAGE",
-	["Affliction"] = "WARLOCK", ["Demonology"] = "WARLOCK", ["Destruction"] = "WARLOCK",
-	["Balance"] = "DRUID", ["Feral Combat"] = "DRUID"
+    -- Warrior
+    ["Arms"] = "WARRIOR", 
+    ["Fury"] = "WARRIOR", 
+    ["Prot"] = {"WARRIOR", "PALADIN"},
+
+    -- Paladin / Priest
+    ["Holy"] = {"PALADIN", "PRIEST"}, 
+    ["Ret"] = "PALADIN",
+    ["Disc"] = "PRIEST", 
+    ["Shadow"] = "PRIEST",
+
+    -- Hunter
+    ["BM"] = "HUNTER", 
+    ["MM"] = "HUNTER", 
+    ["Surv"] = "HUNTER",
+
+    -- Rogue
+    ["Sins"] = "ROGUE", 
+    ["Combat"] = "ROGUE", 
+    ["Sub"] = "ROGUE", -- "Sub" is more common than "Subs"
+
+    -- Shaman / Druid
+    ["Ele"] = "SHAMAN", 
+    ["Enh"] = "SHAMAN", 
+    ["Resto"] = {"SHAMAN", "DRUID"},
+    ["Balance"] = "DRUID", 
+    ["Feral"] = "DRUID", -- "Feral" is cleaner than "Feral Combat"
+
+    -- Mage
+    ["Arcane"] = "MAGE", 
+    ["Fire"] = "MAGE", 
+    ["Frost"] = "MAGE",
+
+    -- Warlock
+    ["Affli"] = "WARLOCK", 
+    ["Demo"] = "WARLOCK", 
+    ["Destro"] = "WARLOCK"
 }
+
 local hoverGlow = F:CreateTexture(nil, "OVERLAY")
 hoverGlow:SetTexture("Interface\\Buttons\\CheckButtonHilight")
 hoverGlow:SetBlendMode("ADD")
@@ -194,80 +224,160 @@ local function GetTalentButton(parent, talentID)
 	end)
 	return b
 end
+
 function UpdateMiniList()
-	if not F:IsShown() then return end
-	if _G["PlayerTalentFrame"] then UpdatePosition() end
-	local dataTree, count = {}, 0
-	for name, data in pairs(MiniTalentCacheChar) do
-		count = count + 1
-		local s = data.spec or "General"
-		dataTree[s] = dataTree[s] or {}
-		table.insert(dataTree[s], {name = name, icon = data.icon, id = data.id})
-	end
-	if count > 0 then emptyText:Hide() else emptyText:Show() end
-	local specs = {}
-	for s in pairs(dataTree) do table.insert(specs, s) end
-	table.sort(specs)
-	for _, frame in pairs(specFrames) do frame:Hide() end
-	local leftY, midY, rightY = -5, -5, -5
-	local colWidth = 105
-	for i, specName in ipairs(specs) do
-		local currX, currY, targetCol
-		if leftY >= midY and leftY >= rightY then currX, currY, targetCol = 2, leftY, "left"
-		elseif midY >= rightY then currX, currY, targetCol = colWidth + 8, midY, "mid"
-		else currX, currY, targetCol = (colWidth * 2) + 14, rightY, "right" end
-		local sFrame = specFrames[specName] or CreateFrame("Frame", nil, canvas)
-		specFrames[specName] = sFrame
-		sFrame:ClearAllPoints()
-		sFrame:SetPoint("TOPLEFT", canvas, "TOPLEFT", currX, currY)
-		sFrame:SetSize(colWidth, 24)
-		sFrame:Show()
-		sFrame.headerIcons = sFrame.headerIcons or {}
-		for _, hi in ipairs(sFrame.headerIcons) do hi:Hide() end
-		local classes = SPEC_MAP[specName] or {"GENERAL"}
-		if type(classes) == "string" then classes = {classes} end
-		local lastIcon = nil
-		for j, tag in ipairs(classes) do
-			local icon = sFrame.headerIcons[j] or sFrame:CreateTexture(nil, "ARTWORK")
-			icon:SetSize(14, 14)
-			icon:ClearAllPoints()
-			if j == 1 then icon:SetPoint("TOPLEFT", 0, 0) else icon:SetPoint("LEFT", sFrame.headerIcons[j-1], "RIGHT", 2, 0) end
-			if tag == "GENERAL" then icon:SetTexture("Interface\\Icons\\INV_Misc_Book_09")
-			else
-				icon:SetTexture("Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Classes")
-				local c = CLASS_ICON_TCOORDS[tag]
-				if c then icon:SetTexCoord(unpack(c)) end
-			end
-			icon:Show() sFrame.headerIcons[j] = icon lastIcon = icon
-		end
-		sFrame.txt = sFrame.txt or sFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-		sFrame.txt:SetPoint("LEFT", lastIcon, "RIGHT", 4, 0)
-		sFrame.txt:SetWidth(colWidth - 20)
-		sFrame.txt:SetJustifyH("LEFT")
-		sFrame.txt:SetText("|cffffd100"..specName.."|r")
-		sFrame.talentButtons = sFrame.talentButtons or {}
-		for _, b in ipairs(sFrame.talentButtons) do b:Hide() end
-		local list = dataTree[specName]
-		table.sort(list, function(a,b) return a.name < b.name end)
-		local rowsForThisSpec = 0
-		for k, data in ipairs(list) do
-			local button = sFrame.talentButtons[k] or GetTalentButton(sFrame, data.id)
-			sFrame.talentButtons[k] = button
-			button.tex:SetTexture(data.icon)
-			local col, row = (k-1) % ICONS_PER_ROW, math.floor((k-1) / ICONS_PER_ROW)
-			button:SetPoint("TOPLEFT", sFrame, "TOPLEFT", (col * CELL_SIZE), -18 - (row * CELL_SIZE))
-			button:Show()
-			rowsForThisSpec = row + 1
-		end
-		local addedHeight = 22 + (rowsForThisSpec * CELL_SIZE) + 18
-		if targetCol == "left" then leftY = leftY - addedHeight elseif targetCol == "mid" then midY = midY - addedHeight else rightY = rightY - addedHeight end
-	end
-	local deepestCol = math.abs(math.min(leftY, midY, rightY))
-	local newHeight = count == 0 and 160 or math.min(500, deepestCol + 100)
-	F:SetHeight(newHeight)
-	canvas:SetHeight(deepestCol + 25)
-	scroll:UpdateScrollChildRect()
+    if not F:IsShown() then return end
+    if _G["PlayerTalentFrame"] then UpdatePosition() end
+
+    -- 1. DATA GATHERING
+    local dataTree, count = {}, 0
+    for name, data in pairs(MiniTalentCacheChar) do
+        count = count + 1
+        local s = data.spec or "General"
+        dataTree[s] = dataTree[s] or {}
+        table.insert(dataTree[s], {name = name, icon = data.icon, id = data.id})
+    end
+
+    if count > 0 then emptyText:Hide() else emptyText:Show() end
+
+    -- 2. DYNAMIC CONTROLS (Fixing the button names here)
+    if currentViewSpec then
+        btnCache:Hide()
+        btnClear:Hide()
+        
+        local classes = SPEC_MAP[currentViewSpec] or {"GENERAL"}
+        if type(classes) == "string" then classes = {classes} end
+        local iconString = ""
+        for _, tag in ipairs(classes) do
+            if tag == "GENERAL" then
+                iconString = iconString .. "|TInterface\\Icons\\INV_Misc_Book_09:16:16:0:0|t "
+            else
+                local c = CLASS_ICON_TCOORDS[tag]
+                if c then
+                    iconString = iconString .. "|TInterface\\Glues\\CharacterCreate\\UI-CharacterCreate-Classes:18:18:0:0:256:256:"..(c[1]*256)..":"..(c[2]*256)..":"..(c[3]*256)..":"..(c[4]*256).."|t "
+                end
+            end
+        end
+        title:SetText("|cff00ff00<|r " .. iconString .. currentViewSpec)
+        
+        if not F.backBtn then
+            F.backBtn = CreateFrame("Button", nil, F)
+            F.backBtn:SetAllPoints(title)
+            F.backBtn:SetScript("OnClick", function() currentViewSpec = nil UpdateMiniList() end)
+        end
+        F.backBtn:Show()
+    else
+        btnCache:Show()
+        btnClear:Show()
+        title:SetText(Title_Name)
+        if F.backBtn then F.backBtn:Hide() end
+    end
+
+    -- 3. RENDER LOGIC
+    for _, frame in pairs(specFrames) do frame:Hide() end
+
+    if not currentViewSpec then
+        local specs = {}
+        for s in pairs(dataTree) do table.insert(specs, s) end
+        table.sort(specs)
+        local leftY, midY, rightY, colWidth = -5, -5, -5, 105
+
+        for i, specName in ipairs(specs) do
+            local currX, currY, targetCol
+            if leftY >= midY and leftY >= rightY then currX, currY, targetCol = 2, leftY, "left"
+            elseif midY >= rightY then currX, currY, targetCol = colWidth + 8, midY, "mid"
+            else currX, currY, targetCol = (colWidth * 2) + 14, rightY, "right" end
+
+            local sFrame = specFrames[specName] or CreateFrame("Frame", nil, canvas)
+            specFrames[specName] = sFrame
+            if not sFrame.bg then
+                sFrame:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", tile = true, tileSize = 16, edgeSize = 12, insets = {left = 2, right = 2, top = 2, bottom = 2}})
+                sFrame:SetBackdropColor(0, 0, 0, 0.6)
+                sFrame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+                sFrame:EnableMouse(true)
+                sFrame:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(1, 0.8, 0, 0.8) end)
+                sFrame:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0.3, 0.3, 0.3, 1) end)
+                sFrame:SetScript("OnMouseDown", function() currentViewSpec = specName UpdateMiniList() PlaySound("igCharacterInfoTab") end)
+                sFrame.bg = true
+            end
+            sFrame:ClearAllPoints()
+            sFrame:SetPoint("TOPLEFT", canvas, "TOPLEFT", currX, currY)
+            sFrame:SetWidth(colWidth)
+            sFrame:Show()
+
+            sFrame.headerIcons = sFrame.headerIcons or {}
+            for _, hi in ipairs(sFrame.headerIcons) do hi:Hide() end
+            local classes = SPEC_MAP[specName] or {"GENERAL"}
+            if type(classes) == "string" then classes = {classes} end
+            local lastIcon = nil
+            for j, tag in ipairs(classes) do
+                local icon = sFrame.headerIcons[j] or sFrame:CreateTexture(nil, "ARTWORK")
+                sFrame.headerIcons[j] = icon
+                icon:SetSize(14, 14)
+                if j == 1 then icon:SetPoint("TOPLEFT", 6, -6) else icon:SetPoint("LEFT", sFrame.headerIcons[j-1], "RIGHT", 2, 0) end
+                if tag == "GENERAL" then icon:SetTexture("Interface\\Icons\\INV_Misc_Book_09")
+                else
+                    icon:SetTexture("Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Classes")
+                    local c = CLASS_ICON_TCOORDS[tag]
+                    if c then icon:SetTexCoord(unpack(c)) end
+                end
+                icon:Show() lastIcon = icon
+            end
+            sFrame.txt = sFrame.txt or sFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            sFrame.txt:SetPoint("LEFT", lastIcon, "RIGHT", 4, 0)
+            sFrame.txt:SetText("|cffffd100"..specName.."|r")
+            sFrame.txt:Show()
+
+            sFrame.talentButtons = sFrame.talentButtons or {}
+            for _, b in ipairs(sFrame.talentButtons) do b:Hide() if b.nameTxt then b.nameTxt:Hide() end end
+            local list = dataTree[specName]
+            table.sort(list, function(a,b) return a.name < b.name end)
+            for k, data in ipairs(list) do
+                local b = sFrame.talentButtons[k] or GetTalentButton(sFrame, data.id)
+                sFrame.talentButtons[k] = b
+                b:SetSize(ICON_SIZE, ICON_SIZE)
+                b.tex:SetTexture(data.icon)
+                local col, row = (k-1) % ICONS_PER_ROW, math.floor((k-1) / ICONS_PER_ROW)
+                b:SetPoint("TOPLEFT", sFrame, "TOPLEFT", 6 + (col * CELL_SIZE), -24 - (row * CELL_SIZE))
+                b:Show()
+            end
+            local h = 28 + (math.ceil(#list/ICONS_PER_ROW) * CELL_SIZE) + 6
+            sFrame:SetHeight(h)
+            if targetCol == "left" then leftY = leftY - h - 8 elseif targetCol == "mid" then midY = midY - h - 8 else rightY = rightY - h - 8 end
+        end
+        canvas:SetHeight(math.abs(math.min(leftY, midY, rightY)) + 25)
+    else
+        local list = dataTree[currentViewSpec] or {}
+        table.sort(list, function(a,b) return a.name < b.name end)
+        local sFrame = specFrames[currentViewSpec]
+        sFrame:ClearAllPoints()
+        sFrame:SetPoint("TOPLEFT", canvas, "TOPLEFT", 10, -10)
+        sFrame:SetSize(canvas:GetWidth() - 20, 10)
+        sFrame:Show()
+        if sFrame.txt then sFrame.txt:Hide() end
+        for _, hi in ipairs(sFrame.headerIcons or {}) do hi:Hide() end
+        for _, b in ipairs(sFrame.talentButtons or {}) do b:Hide() end
+        for i, data in ipairs(list) do
+            local b = sFrame.talentButtons[i] or GetTalentButton(sFrame, data.id)
+            sFrame.talentButtons[i] = b
+            b:SetSize(32, 32)
+            b.tex:SetTexture(data.icon)
+            b:SetPoint("TOPLEFT", sFrame, "TOPLEFT", 12, -12 - ((i-1) * 38))
+            b:Show()
+            if not b.nameTxt then b.nameTxt = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight") b.nameTxt:SetPoint("LEFT", b, "RIGHT", 10, 0) end
+            b.nameTxt:SetText(data.name) b.nameTxt:Show()
+        end
+        local totalH = (#list * 38) + 24
+        sFrame:SetHeight(totalH)
+        canvas:SetHeight(totalH + 25)
+    end
+    F:SetHeight(count == 0 and 160 or math.min(600, canvas:GetHeight() + 80))
+    scroll:UpdateScrollChildRect()
+    
+    -- Passing the filter here fixes the stat summary
+    UpdateStatSummary(currentViewSpec)
 end
+
 function InstantScan()
 	local foundNew = false
 	if not PlayerTalentFrame or not PlayerTalentFrame:IsShown() then return false end
@@ -283,7 +393,29 @@ function InstantScan()
 				end
 			end
 			local spec = "General"
-			for s in pairs(SPEC_MAP) do if text:find(s) then spec = s break end end
+            
+            -- NEW TRANSLATION LOGIC
+            if text:find("Assassination") then spec = "Sins"
+            elseif text:find("Subtlety") then spec = "Sub"
+            elseif text:find("Retribution") then spec = "Ret"
+            elseif text:find("Protection") then spec = "Prot"
+            elseif text:find("Beast Mastery") then spec = "BM"
+            elseif text:find("Marksmanship") then spec = "MM"
+            elseif text:find("Survival") then spec = "Surv"
+            elseif text:find("Discipline") then spec = "Disc"
+            elseif text:find("Restoration") then spec = "Resto"
+            elseif text:find("Enhancement") then spec = "Enh"
+            elseif text:find("Elemental") then spec = "Ele"
+            elseif text:find("Affliction") then spec = "Affli"
+            elseif text:find("Demonology") then spec = "Demo"
+            elseif text:find("Destruction") then spec = "Destro"
+            elseif text:find("Feral") then spec = "Feral"
+            else
+                -- Fallback for simple names like "Arms", "Fury", "Holy", "Fire"
+                for s in pairs(SPEC_MAP) do 
+                    if text:find(s) then spec = s break end 
+                end
+            end
 			if name and r:GetScript("OnEnter") then
 				r:GetScript("OnEnter")(r)
 				local _, _, id = GameTooltip:GetSpell()
@@ -380,19 +512,28 @@ local function GetStatRow(index)
     f.hl:SetAllPoints()
     f.hl:SetTexture(1, 1, 0, 0.3)
     f.hl:Hide()
-    f:SetScript("OnEnter", function(self)
+	f:SetScript("OnEnter", function(self)
         if not self.sources then return end
         self.hl:Show()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine(self.statName, 1, 1, 1)
         GameTooltip:AddLine("Sources:", 0.5, 0.5, 1)
+        local isPct = self.sources.isPct
+        local suffix = isPct and "%" or ""
         local s = {}
-        for n, v in pairs(self.sources) do 
-            table.insert(s, {name = n, val = v.val, desc = v.desc}) 
+        for _, data in ipairs(self.sources) do 
+            table.insert(s, {
+                name = data.name, 
+                val = data.val, 
+                active = data.active,
+                desc = data.desc
+            }) 
+
+            -- Highlight logic
             for _, sFrame in pairs(specFrames) do
                 if sFrame.talentButtons then
                     for _, btn in ipairs(sFrame.talentButtons) do
-                        local cached = MiniTalentCacheChar[n]
+                        local cached = MiniTalentCacheChar[data.name]
                         if btn:IsShown() and cached and btn.tex:GetTexture() == cached.icon then
                             if btn.glow then btn.glow:Show() end
                         end
@@ -401,14 +542,13 @@ local function GetStatRow(index)
             end
         end
         table.sort(s, function(a,b) return a.val > b.val end)
-		for _, d in ipairs(s) do
-			local display = d.desc or d.val 
-			local suffix = self.statName:find("%%") and "%" or ""
-			local isActive = (d.active ~= false) 
-			local valColor = isActive and "|cff00ff00+" or "|cffff0000+"
-			local nameColor = isActive and "|cffffffff" or "|cff808080"
-			GameTooltip:AddDoubleLine(nameColor..d.name.."|r", valColor..display..suffix.."|r")
-		end
+        for _, d in ipairs(s) do
+            local display = d.desc or d.val 
+            local isActive = (d.active ~= false) 
+            local valColor = isActive and "|cff00ff00+" or "|cffff0000+"
+            local nameColor = isActive and "|cffffffff" or "|cff808080"
+            GameTooltip:AddDoubleLine(nameColor..d.name.."|r", valColor..display..suffix.."|r")
+        end
         GameTooltip:Show()
     end)
     f:SetScript("OnLeave", function(self)
@@ -449,68 +589,97 @@ local function IsReqMet(req)
     return false
 end
 
-function UpdateStatSummary()
+function UpdateStatSummary(filterSpec)
+    if not StatFrame:IsShown() then return end
+    
     local totals, sources = {}, {}
     if not CL_FixedTalents then return end
+
+    -- Update the Title so you can see it's working
+    if filterSpec then
+        StatFrame.title:SetText("|cff00ff00" .. filterSpec .. "|r Stats")
+    else
+        StatFrame.title:SetText("Global Stat Summary")
+    end
+
     for name, data in pairs(MiniTalentCacheChar) do
-        local talentID = data.id
-        if talentID and CL_FixedTalents[talentID] then
-            for _, stat in ipairs(CL_FixedTalents[talentID]) do
-                local label, val, isPct, req = stat[1], stat[2], stat[3], stat[4]
-                local active = IsReqMet(req)
-                local finalVal = 0
-                if label == "ARMOR_CALC" then
-                    local _, armor = UnitArmor("player")
-                    finalVal = math.floor(armor / 108) * val
-                    label = "Attack Power"
-                else
-                    finalVal = tonumber(val) or 0
-                end
-                local finalLabel = label .. (isPct and " %" or "")
-                if active then
-                    totals[finalLabel] = (totals[finalLabel] or 0) + finalVal
-                end
-                sources[finalLabel] = sources[finalLabel] or {}
-                sources[finalLabel][name] = {val = finalVal, active = active}
+        local match = false
+        if not filterSpec then
+            match = true
+        elseif data.spec then
+            -- Use string.lower to prevent "Sins" vs "sins" mismatching
+            if data.spec:lower() == filterSpec:lower() then
+                match = true
             end
         end
+
+		if match then
+			local talentID = data.id
+			if talentID and CL_FixedTalents[talentID] then
+				for _, stat in ipairs(CL_FixedTalents[talentID]) do
+					local label, val, isPct, req = stat[1], stat[2], stat[3], stat[4]
+					
+					-- FIX: Force active if it's a math calculation, otherwise check requirements
+					local active = (label == "ARMOR_CALC") or IsReqMet(req)
+					
+					local finalLabel = label 
+					local finalVal = 0
+					
+					if label == "ARMOR_CALC" then
+						local _, armor = UnitArmor("player")
+						local divisor = tonumber(req) or 180 
+						finalVal = math.floor(armor / divisor) * val
+						finalLabel = "AP Flat"
+					else
+						finalVal = tonumber(val) or 0
+					end
+
+					if active then
+						totals[finalLabel] = (totals[finalLabel] or 0) + finalVal
+					end
+
+					if not sources[finalLabel] then
+						sources[finalLabel] = { isPct = isPct }
+					end
+					table.insert(sources[finalLabel], {name = name, val = finalVal, active = active})
+				end
+			end
+		end
     end
-for _, r in ipairs(statRows) do r:Hide() end
+
+    for _, r in ipairs(statRows) do r:Hide() end
     local keys = {}
     for k in pairs(totals) do table.insert(keys, k) end
     table.sort(keys)
-    local maxWidth = 130
-    local visibleRows = 0
+
+    local maxWidth, visibleRows = 130, 0
     for i, lbl in ipairs(keys) do
         local row = GetStatRow(i)
-        local suffix = lbl:find("%%") and "%" or ""
+        local suffix = (sources[lbl] and sources[lbl].isPct) and "%" or ""
         local displayText = lbl..": |cff00ff00+"..totals[lbl]..suffix.."|r"
         row.statName, row.sources = lbl, sources[lbl]
         row.txt:SetText(displayText)
         row:Show()
         local textWidth = row.txt:GetStringWidth()
-        if textWidth + 20 > maxWidth then
-            maxWidth = textWidth + 20
-        end
+        if textWidth + 20 > maxWidth then maxWidth = textWidth + 20 end
         visibleRows = i
     end
+
     if visibleRows == 0 then
         StatFrame:SetHeight(40)
         StatFrame:SetWidth(150)
     else
         StatFrame:SetWidth(maxWidth + 16) 
-        local newHeight = 35 + (visibleRows * 18)
-        StatFrame:SetHeight(newHeight)
-        for i = 1, visibleRows do
-            statRows[i]:SetWidth(maxWidth)
-        end
+        StatFrame:SetHeight(35 + (visibleRows * 18))
+        for i = 1, visibleRows do statRows[i]:SetWidth(maxWidth) end
     end
 end
 
-local oldUpdate = UpdateMiniList
-function UpdateMiniList()
-    if oldUpdate then oldUpdate() end
-    UpdateStatSummary()
+local originalUpdateMiniList = UpdateMiniList
+UpdateMiniList = function()
+    originalUpdateMiniList()
+    -- This was missing 'currentViewSpec' in your snippet, which caused the reset
+    UpdateStatSummary(currentViewSpec)
 end
 
 local btnStats = CreateFrame("Button", "CL_StatSummaryToggle", F, "UIPanelButtonTemplate")
@@ -518,24 +687,13 @@ btnStats:SetSize(85, 22)
 btnStats:SetPoint("BOTTOMRIGHT", F, "BOTTOMRIGHT", -15, 12)
 btnStats:SetText("Summary")
 
-btnStats:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText("Stat Summary")
-    GameTooltip:AddLine("Toggle the global talent bonus panel.", 1, 1, 1)
-    GameTooltip:Show()
-end)
-
-btnStats:SetScript("OnLeave", function() 
-    GameTooltip:Hide() 
-end)
-
 btnStats:SetScript("OnClick", function()
     if StatFrame:IsShown() then
         StatFrame:Hide()
         PlaySound("igMainMenuOptionCheckBoxOff")
     else
         StatFrame:Show()
-        if UpdateStatSummary then UpdateStatSummary() end
+        UpdateStatSummary(currentViewSpec)
         PlaySound("igMainMenuOptionCheckBoxOn")
     end
 end)
@@ -544,6 +702,6 @@ local gearUpdate = CreateFrame("Frame")
 gearUpdate:RegisterEvent("UNIT_INVENTORY_CHANGED")
 gearUpdate:SetScript("OnEvent", function(self, event, unit)
     if unit == "player" and StatFrame:IsShown() then
-        UpdateStatSummary()
+        UpdateStatSummary(currentViewSpec)
     end
 end)
