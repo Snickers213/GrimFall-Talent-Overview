@@ -191,8 +191,10 @@ CL_FixedTalents = {
     [20121] = {{global_crit, 5, true}}, -- Conviction (5% Phys/Spell Crit)
     [31868] = {{global_damage, 3, true}}, -- Crusade
     [31872] = {{spell_dodge, 4, true}, {ranged_dodge, 4, true}}, -- Divine Purpose
-    [53503] = {{Spell_power_from_ap, 30, true}}, -- Sheath of Light (AP as SP)
+    [53503] = {{spell_power_from_ap, 30, true}}, -- Sheath of Light (AP as SP)
     [53648] = {{global_haste, 3, true}}, -- Sheath of Light (AP as SP)
+    [35397] = {{global_crit, 3, true}}, -- Sanctity OF Battle
+	
 	
 -- PRIEST: DISCIPLINE
     [52803] = {{instant_heal, 5, true}, {instant_damage, 5, true}}, -- Twin Disciplines
