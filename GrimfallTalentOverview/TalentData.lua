@@ -70,6 +70,7 @@ ranged_crit_dmg = "Ranged Crit Dmg"
 ranged_hit = "Ranged Hit"
 ranged_haste = "Ranged Haste"
 ranged_dodge = "Ranged Dodge"
+ranged_damage = "Ranged Dmg"
 
 -- Conversions (Stat A to Stat B)
 global_armor_from_int = "Int > Armor"
@@ -117,6 +118,8 @@ CL_FixedTalents = {
     [33591] = {{spell_power_from_int, 12, true}}, -- Lunar Guidance (12% Intellect as SP)
     [16924] = {{spell_haste, 3, true}}, -- Celestial Focus 3% Haste
     [33596] = {{spell_hit, 4, true}}, -- Balance of power 4% Spell Hit
+    [48511] = {{spell_damage, 6, true}}, -- Earth And Moon
+	
 
     -- DRUID: FERAL
     [16931] = {{global_cloth_leather_armour, 10, true}}, -- Thick Hide (10% Armor from items)
@@ -141,7 +144,9 @@ CL_FixedTalents = {
     [34484] = {{ranged_ap_from_Int, 100, true}}, -- Careful Aim
     [34476] = {{global_agility, 4, true}, {global_intellect, 4, true}}, -- Combat Experience
     [19506] = {{global_attack_power, 10, true}}, -- Trueshot Aura
-    [34489] = {{global_crit, 5, true}}, -- Master Marksman
+    [34489] = {{melee_crit, 5, true}, {ranged_crit, 5, true}}, -- Master Marksman
+    [53246] = {{ranged_damage, 5, true}}, -- Marked for Death
+	
 
     -- HUNTER: SURVIVAL
     [34496] = {{global_dmg_taken_reduced, 4, true}}, -- Survival Instinct
@@ -165,6 +170,8 @@ CL_FixedTalents = {
     [31640] = {{spell_damage, 3, true}, {spell_damage_taken_reduced, 3 , true}}, -- Playing with Fire
     [34296] = {{spell_crit, 3, true}}, -- Pyromaniac
     [44472] = {{spell_crit_dmg, 50, true}}, -- Burnout
+    [34939] = {{spell_crit, 3, true}}, -- Burnout
+	
 
     -- MAGE: FROST
     [29440] = {{spell_hit, 3, true}}, -- Precision
