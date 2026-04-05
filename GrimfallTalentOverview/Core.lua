@@ -164,14 +164,14 @@ local SPEC_MAP = {
     -- Rogue
     ["Sins"] = "ROGUE", 
     ["Combat"] = "ROGUE", 
-    ["Sub"] = "ROGUE", -- "Sub" is more common than "Subs"
+    ["Sub"] = "ROGUE",
 
     -- Shaman / Druid
     ["Ele"] = "SHAMAN", 
     ["Enh"] = "SHAMAN", 
     ["Resto"] = {"SHAMAN", "DRUID"},
     ["Balance"] = "DRUID", 
-    ["Feral"] = "DRUID", -- "Feral" is cleaner than "Feral Combat"
+    ["Feral"] = "DRUID",
 
     -- Mage
     ["Arcane"] = "MAGE", 
@@ -228,8 +228,6 @@ end
 function UpdateMiniList()
     if not F:IsShown() then return end
     if _G["PlayerTalentFrame"] then UpdatePosition() end
-
-    -- 1. DATA GATHERING
     local dataTree, count = {}, 0
     for name, data in pairs(MiniTalentCacheChar) do
         count = count + 1
@@ -237,14 +235,10 @@ function UpdateMiniList()
         dataTree[s] = dataTree[s] or {}
         table.insert(dataTree[s], {name = name, icon = data.icon, id = data.id})
     end
-
     if count > 0 then emptyText:Hide() else emptyText:Show() end
-
-    -- 2. DYNAMIC CONTROLS (Fixing the button names here)
     if currentViewSpec then
         btnCache:Hide()
         btnClear:Hide()
-        
         local classes = SPEC_MAP[currentViewSpec] or {"GENERAL"}
         if type(classes) == "string" then classes = {classes} end
         local iconString = ""
@@ -259,7 +253,6 @@ function UpdateMiniList()
             end
         end
         title:SetText("|cff00ff00<|r " .. iconString .. currentViewSpec)
-        
         if not F.backBtn then
             F.backBtn = CreateFrame("Button", nil, F)
             F.backBtn:SetAllPoints(title)
@@ -272,16 +265,12 @@ function UpdateMiniList()
         title:SetText(Title_Name)
         if F.backBtn then F.backBtn:Hide() end
     end
-
-    -- 3. RENDER LOGIC
     for _, frame in pairs(specFrames) do frame:Hide() end
-
     if not currentViewSpec then
         local specs = {}
         for s in pairs(dataTree) do table.insert(specs, s) end
         table.sort(specs)
         local leftY, midY, rightY, colWidth = -5, -5, -5, 105
-
         for i, specName in ipairs(specs) do
             local currX, currY, targetCol
             if leftY >= midY and leftY >= rightY then currX, currY, targetCol = 2, leftY, "left"
@@ -304,7 +293,6 @@ function UpdateMiniList()
             sFrame:SetPoint("TOPLEFT", canvas, "TOPLEFT", currX, currY)
             sFrame:SetWidth(colWidth)
             sFrame:Show()
-
             sFrame.headerIcons = sFrame.headerIcons or {}
             for _, hi in ipairs(sFrame.headerIcons) do hi:Hide() end
             local classes = SPEC_MAP[specName] or {"GENERAL"}
@@ -373,11 +361,8 @@ function UpdateMiniList()
     end
     F:SetHeight(count == 0 and 160 or math.min(600, canvas:GetHeight() + 80))
     scroll:UpdateScrollChildRect()
-    
-    -- Passing the filter here fixes the stat summary
     UpdateStatSummary(currentViewSpec)
 end
-
 function InstantScan()
 	local foundNew = false
 	if not PlayerTalentFrame or not PlayerTalentFrame:IsShown() then return false end
@@ -393,8 +378,6 @@ function InstantScan()
 				end
 			end
 			local spec = "General"
-            
-            -- NEW TRANSLATION LOGIC
             if text:find("Assassination") then spec = "Sins"
             elseif text:find("Subtlety") then spec = "Sub"
             elseif text:find("Retribution") then spec = "Ret"
@@ -411,7 +394,6 @@ function InstantScan()
             elseif text:find("Destruction") then spec = "Destro"
             elseif text:find("Feral") then spec = "Feral"
             else
-                -- Fallback for simple names like "Arms", "Fury", "Holy", "Fire"
                 for s in pairs(SPEC_MAP) do 
                     if text:find(s) then spec = s break end 
                 end
@@ -483,7 +465,6 @@ loader:SetScript("OnUpdate", function(self, elapsed)
 		self.timer = 0
 	end
 end)
--- Side Panel (Stats)
 local StatFrame = CreateFrame("Frame", nil, F)
 StatFrame:SetWidth(150)
 StatFrame:SetPoint("TOPLEFT", F, "TOPRIGHT", -5, -40)
@@ -498,7 +479,6 @@ StatFrame:SetBackdropColor(0, 0, 0, 0.8)
 StatFrame.title = StatFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 StatFrame.title:SetPoint("TOP", 0, -10)
 StatFrame.title:SetText("Global Stat Summary")
-
 local statRows = {}
 local function GetStatRow(index)
     if statRows[index] then return statRows[index] end
@@ -528,8 +508,6 @@ local function GetStatRow(index)
                 active = data.active,
                 desc = data.desc
             }) 
-
-            -- Highlight logic
             for _, sFrame in pairs(specFrames) do
                 if sFrame.talentButtons then
                     for _, btn in ipairs(sFrame.talentButtons) do
@@ -565,7 +543,6 @@ local function GetStatRow(index)
     statRows[index] = f
     return f
 end
-
 local function IsReqMet(req)
     if not req or req == "" then return true end
     local mhLink = GetInventoryItemLink("player", 16)
@@ -588,43 +565,32 @@ local function IsReqMet(req)
     end
     return false
 end
-
 function UpdateStatSummary(filterSpec)
     if not StatFrame:IsShown() then return end
-    
     local totals, sources = {}, {}
     if not CL_FixedTalents then return end
-
-    -- Update the Title so you can see it's working
     if filterSpec then
         StatFrame.title:SetText("|cff00ff00" .. filterSpec .. "|r Stats")
     else
         StatFrame.title:SetText("Global Stat Summary")
     end
-
     for name, data in pairs(MiniTalentCacheChar) do
         local match = false
         if not filterSpec then
             match = true
         elseif data.spec then
-            -- Use string.lower to prevent "Sins" vs "sins" mismatching
             if data.spec:lower() == filterSpec:lower() then
                 match = true
             end
         end
-
 		if match then
 			local talentID = data.id
 			if talentID and CL_FixedTalents[talentID] then
 				for _, stat in ipairs(CL_FixedTalents[talentID]) do
 					local label, val, isPct, req = stat[1], stat[2], stat[3], stat[4]
-					
-					-- FIX: Force active if it's a math calculation, otherwise check requirements
 					local active = (label == "ARMOR_CALC") or IsReqMet(req)
-					
 					local finalLabel = label 
 					local finalVal = 0
-					
 					if label == "ARMOR_CALC" then
 						local _, armor = UnitArmor("player")
 						local divisor = tonumber(req) or 180 
@@ -633,11 +599,9 @@ function UpdateStatSummary(filterSpec)
 					else
 						finalVal = tonumber(val) or 0
 					end
-
 					if active then
 						totals[finalLabel] = (totals[finalLabel] or 0) + finalVal
 					end
-
 					if not sources[finalLabel] then
 						sources[finalLabel] = { isPct = isPct }
 					end
@@ -646,12 +610,10 @@ function UpdateStatSummary(filterSpec)
 			end
 		end
     end
-
     for _, r in ipairs(statRows) do r:Hide() end
     local keys = {}
     for k in pairs(totals) do table.insert(keys, k) end
     table.sort(keys)
-
     local maxWidth, visibleRows = 130, 0
     for i, lbl in ipairs(keys) do
         local row = GetStatRow(i)
@@ -664,7 +626,6 @@ function UpdateStatSummary(filterSpec)
         if textWidth + 20 > maxWidth then maxWidth = textWidth + 20 end
         visibleRows = i
     end
-
     if visibleRows == 0 then
         StatFrame:SetHeight(40)
         StatFrame:SetWidth(150)
@@ -674,19 +635,15 @@ function UpdateStatSummary(filterSpec)
         for i = 1, visibleRows do statRows[i]:SetWidth(maxWidth) end
     end
 end
-
 local originalUpdateMiniList = UpdateMiniList
 UpdateMiniList = function()
     originalUpdateMiniList()
-    -- This was missing 'currentViewSpec' in your snippet, which caused the reset
     UpdateStatSummary(currentViewSpec)
 end
-
 local btnStats = CreateFrame("Button", "CL_StatSummaryToggle", F, "UIPanelButtonTemplate")
 btnStats:SetSize(85, 22)
 btnStats:SetPoint("BOTTOMRIGHT", F, "BOTTOMRIGHT", -15, 12)
 btnStats:SetText("Summary")
-
 btnStats:SetScript("OnClick", function()
     if StatFrame:IsShown() then
         StatFrame:Hide()
@@ -697,7 +654,6 @@ btnStats:SetScript("OnClick", function()
         PlaySound("igMainMenuOptionCheckBoxOn")
     end
 end)
-
 local gearUpdate = CreateFrame("Frame")
 gearUpdate:RegisterEvent("UNIT_INVENTORY_CHANGED")
 gearUpdate:SetScript("OnEvent", function(self, event, unit)
