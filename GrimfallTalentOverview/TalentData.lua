@@ -122,7 +122,7 @@ CL_FixedTalents = {
 	
 
     -- DRUID: FERAL
-    [16931] = {{global_cloth_leather_armour, 10, true}}, -- Thick Hide (10% Armor from items)
+    [16931] = {{global_armor, 10, true}}, -- Thick Hide (10% Armor from items)
     [24894] = {{global_intellect, 20, true}}, -- Heart of the Wild
     [33856] = {{global_all_Stats, 6, true}, {melee_crit_reduction, 6, true}}, -- Survival of the Fittest
 
