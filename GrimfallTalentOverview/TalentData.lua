@@ -81,6 +81,8 @@ ranged_ap_from_Int = "Int > RAP"
 ap_from_int = "Int > AP"
 mp5_from_int = "Int > Mp5"
 healing_power_from_int = "Int > Hsp"
+ap_from_stam = "Stam > AP"
+rap_from_stam = "Stam > RAP"
 
 -- Healing
 global_healing = "Healing"
@@ -155,6 +157,8 @@ CL_FixedTalents = {
     [19373] = {{global_crit, 3, true}}, -- Killer Instinct
     [24297] = {{global_agility, 15, true}}, -- Lightning Reflexes
     [53292] = {{global_agility, 3, true}}, -- Lightning Reflexes
+    [56341] = {{rap_from_stam, 30, true}, {ap_from_stam, 30, true}}, -- Lightning Reflexes
+	
 	
 -- MAGE: ARCANE
     [54659] = {{global_armor_from_int, 150, true}}, -- Arcane Fortitude (150% Int as Armor)
@@ -179,7 +183,7 @@ CL_FixedTalents = {
     [31678] = {{melee_dodge, 5, true}, {ranged_dodge, 5, true}}, -- Arctic Winds
 	
 -- PALADIN: HOLY
-    [20261] = {{global_intellect, 15, true}}, -- Divine Intellect (15% Total Intellect)
+    [20261] = {{global_intellect, 10, true}}, -- Divine Intellect (15% Total Intellect)
     [31841] = {{spell_power_from_int, 20, true}}, -- Holy Guidance
 
     -- PALADIN: PROTECTION
